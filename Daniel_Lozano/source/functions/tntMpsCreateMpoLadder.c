@@ -128,11 +128,17 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
         /* Allocate array of the correct size for the internal leg quantum numbers - all the values will be initialised to zero */
         qnums_int = tntIntArrayAlloc(Dmpo*tntSymmNumGet());
         
-        /* Loop through the nearest neighbour operators, finding the correct internal quantum number for each one */
-        if (nnl != NULL) {
-            for (i = 0; i < nnl->sz; i++) {
+        /* Loop through the nearest neighbour and next nearest neighbours operators, finding the correct internal quantum number for each one */
+        if( (nnl != NULL) || (nnnl != NULL) ){
+            for (i = 0; i < (nnl->sz + nnnl->sz); i++) {
                 /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
-                qnums_op = tntMpsOpGetQN(nnl->vals[i]);
+                
+                if( i< nnl->sz){
+                    qnums_op = tntMpsOpGetQN(nnl->vals[i]);
+                }
+                else{
+                    qnums_op = tntMpsOpGetQN(nnnl->vals[i]);
+                    }
                 
                 /* copy it to the relevant entry for the internal leg */
                 for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[(i+1)*tntSymmNumGet() + j] = qnums_op.vals[j];
@@ -141,21 +147,7 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
                 tntIntArrayFree(&qnums_op);
             }
         }
-        /* Loop through the next nearest neighbour operators, finding the correct internal quantum number for each one */
-
-        if (nnnl != NULL) {
-            for (i = 0; i < nnnl->sz; i++) {
-                /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
-                qnums_op = tntMpsOpGetQN(nnnl->vals[i]);
-                
-                /* copy it to the relevant entry for the internal leg */
-                for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[(i+1)*tntSymmNumGet() + j] = qnums_op.vals[j];
-                
-                /* free the array containing the quantum number label */
-                tntIntArrayFree(&qnums_op);
-            }
-        }
-
+      
 //        if (nnl != NULL) {
 //            for (i = 0; i < nnl->sz; i++) {
 //                /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
