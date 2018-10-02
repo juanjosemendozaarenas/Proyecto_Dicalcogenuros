@@ -4,27 +4,27 @@ clear; clc;
 path(path,'./tnt_matfiles/'); % Add path for common functions
 
 %% Define system parameters
-L = 6; % System size
+L = 8; % System size
 J = 1; % Hopping
 U_array = [2]; % List of values of on-site interaction
 V = 1; % Nearest-neighbor interaction
-a=0.5; %Parameter mediating the legs of the ladder
+a=1; %Parameter mediating the legs of the ladder
 
 
 J1_coupling = zeros(L-1,1)'; % Array of J for nn
 V1_coupling = zeros(L-1,1)'; % Array of V for nn
 
-for i= (1:L-1)
-   if(mod(i,2)==1) 
+for i= (1:L-1) %initialicing the array parameter for the nn in the ladder
+   if(mod(i,2)==1 )%|| mod(i,2)==0) 
         J1_coupling(i) = - a*J; 
-        V1_coupling(i) = - a*V ;
+        V1_coupling(i) = a*V ;
    end
 end 
 
 J2_coupling = -J*diag(eye(L-2))'; % Array of J for nnn
 V2_coupling = V*diag(eye(L-2))'; % Array of V for nnn
 
-qn_tot = [0.5*L 0.5*L]; % Define quantum numbers for each species
+qn_tot = [0.25*L 0.5*L]; % Define quantum numbers for each species
 add_to_file = 0; % Number to add to name of files
 
 chi_ini_rand = 1; % Truncation parameter for the initial random state without symmetries. Has to be very small so random MPS can be created in C code (this is a bug of the TNT library)
@@ -33,9 +33,9 @@ chi_max = 900; % Maximal and chi value of the truncation parameter
 delta_chi = 100; % Increase of chi each time maximal error is achieved. Set to zero to keep chi constant.
 
 intermediate = 0; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
-use_symm = 0; % Decide if symmetries will be used. 1 if yes, 0 if no
+use_symm = 1; % Decide if symmetries will be used. 1 if yes, 0 if no
 
-rand_wf = 0; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
+rand_wf = 1; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
 prec = 1e-6; % Precision in calculation of energy
 i_max = 60; % Maximal number of DMRG iterations
 err_max = 1e-7; % Maximal error before increasing chi in each DMRG step
@@ -119,18 +119,67 @@ for count_file = 1:size(U_array,2)
     % Nearest-neighbour terms
     % This corresponds to c^+_dn x c_dn (RL down), c_dn x c^+_dn (LR down),
     % c^+_up x c_up (RL up), c_up x c^+_up (LR up), and n x n (Nearest-neighbour coupling)
-    
+    if (V ~= 0)
+        
     nnlg = tntMatCreateOpArray({cdP{1},Pc{1},cdP{2},Pc{2},n{1}+n{2}}); %n{1}+n{2}
     nnrg = tntMatCreateOpArray({c{1},cd{1},c{2},cd{2},n{1}+n{2}}); %n{1}+n{2}}
     
+    
     % This array, containing the constant part of the hopping, is defined
     % here for convenience. Its values are replaced in the main C function
-    nnparamg = [J_coupling;
-        J_coupling;
-        J_coupling;
-        J_coupling;
-        V_coupling]; %;V_coupling;   V_coupling;   V_coupling
+    nnparamg = [J1_coupling;
+        J1_coupling;
+        J1_coupling;
+        J1_coupling;
+        V1_coupling]; %;V_coupling;   V_coupling;   V_coupling
     
+    % Next-nearest-neighbour terms
+    % This corresponds to c^+_dn x c_dn (RL down), c_dn x c^+_dn (LR down),
+    % c^+_up x c_up (RL up), c_up x c^+_up (LR up), and n x n (Nearest-neighbour coupling)
+    
+    nnnlg = tntMatCreateOpArray({cdP{1},Pc{1},cdP{2},Pc{2},n{1}+n{2}}); 
+    nnnrg = tntMatCreateOpArray({c{1},cd{1},c{2},cd{2},n{1}+n{2}}); 
+    
+    %The operators are the same used in the nn interaction
+    
+    % I am defining the new parameters for the nnn interaction in the same
+    % way as the nn was define
+    nnnparamg = [J2_coupling;
+        J2_coupling;
+        J2_coupling;
+        J2_coupling;
+        V2_coupling]; %;V_coupling;   V_coupling;   V_coupling
+    
+    else
+        
+    nnlg = tntMatCreateOpArray({cdP{1},Pc{1},cdP{2},Pc{2}}); %n{1}+n{2}
+    nnrg = tntMatCreateOpArray({c{1},cd{1},c{2},cd{2}}); %n{1}+n{2}}
+    
+    
+    % This array, containing the constant part of the hopping, is defined
+    % here for convenience. Its values are replaced in the main C function
+    nnparamg = [J1_coupling;
+        J1_coupling;
+        J1_coupling;
+        J1_coupling]; %;V_coupling;   V_coupling;   V_coupling
+    
+    % Next-nearest-neighbour terms
+    % This corresponds to c^+_dn x c_dn (RL down), c_dn x c^+_dn (LR down),
+    % c^+_up x c_up (RL up), c_up x c^+_up (LR up), and n x n (Nearest-neighbour coupling)
+    
+    nnnlg = tntMatCreateOpArray({cdP{1},Pc{1},cdP{2},Pc{2}}); 
+    nnnrg = tntMatCreateOpArray({c{1},cd{1},c{2},cd{2}}); 
+    
+    %The operators are the same used in the nn interaction
+    
+    % I am defining the new parameters for the nnn interaction in the same
+    % way as the nn was define
+    nnnparamg = [J2_coupling;
+        J2_coupling;
+        J2_coupling;
+        J2_coupling]; %;V_coupling;   V_coupling;   V_coupling
+    
+    end
     %% Expectation values to take
     ExOp.os_operators = tntMatCreateOpArray({n{1},n{2},dbl{1},n{2}-n{1}}); % Single-site operators
     ExOp.os_labels = {'ndn','nup','dbl','sz'};
@@ -180,10 +229,10 @@ for count_file = 1:size(U_array,2)
     %% Save information
     
     % Name of file where ground state will be saved
-    savefile = ['GS_FH_L' num2str(L) '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_chi' num2str(chi_max)  '.mat'];
+    savefile = ['GS_FH_NNN_L' num2str(L) '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_chi' num2str(chi_max)   '.mat'];
     
     % Saving current information
-    fname = ['../initfiles/initial_GS_FH' '_original_' num2str(count_file+add_to_file)  '.mat'];
+    fname = ['../initfiles/initial_GS_FH' '_NNN'  '.mat']; %num2str(count_file+add_to_file)
     save(fname);
     
 end

@@ -1,11 +1,13 @@
-clear; clc;
+%clear; clc;
+
+dim_site=4;%Dimension del espacio (fija)
+N=4;%Numero de sitios debe ser divisible por 2
+dim=(dim_site).^N;
 
 J=1;
 U=2;
 V=1;
-dim_site=4;%Dimension del espacio (fija)
-N=6;%Numero de sitios debe ser divisible por 2
-dim=(dim_site).^N;
+
 PBC=0;%Condiciones de frontera periodicas
 disp("Parametros")
 disp("J="+num2str(J)+", U="+num2str(U)+", V="+num2str(V)+", Sitios="+num2str(N))
@@ -15,6 +17,7 @@ C_d_do=[0,0,0,0;
         0,0,0,0;
         1,0,0,0;
         0,-1,0,0];
+    
 N_do=[0,0,0,0;
       0,0,0,0;
       0,0,1,0;
@@ -24,6 +27,7 @@ C_d_up=[0,0,0,0;
         1,0,0,0;
         0,0,0,0;
         0,0,1,0];
+    
 N_up=[0,0,0,0;
       0,1,0,0;
       0,0,0,0;
