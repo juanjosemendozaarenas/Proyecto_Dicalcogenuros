@@ -77,10 +77,10 @@ int main(int argc, char **argv)
     }
     
     /* Create the MPO from the system parameters */
-    printf("Starting creation of mpo\n");
+    printf("Starting creation of mpo\n\n\n");
     
     printf("use_symm=%x\n",use_symm);
-    printf("rand_wf=%d",rand_wf);
+    printf("rand_wf=%d\n",rand_wf);
     if(use_symm==0){ ignoreQN=1;}
     
     H = tntMpsCreateMpoLadder(L,&nnl,&nnr,&nnparam,&nnnl,&nnnr,&nnnparam,&os,&osparam,saveprefix,ignoreQN);

@@ -11,45 +11,45 @@ $LastChangedDate$
 
 
 /*! \ingroup mps
- * Creates an MPO network represeting a site-wide operator \f$\hat{O}\f$ formed from a sum of nearest-neighbour and onsite terms. 
- * 
+ * Creates an MPO network represeting a site-wide operator \f$\hat{O}\f$ formed from a sum of nearest-neighbour and onsite terms.
+ *
  * \f[
  * \hat{O} = \sum_{j=0}^{L-2}\sum_i^{n_n}\alpha_{i,j}\hat{o}^l_{i}\otimes\hat{o}^r_i + \sum_{j=0}^{L-1}\sum_i^{n_o}\beta_{i,j}\hat{o}^s_{i}
  * \f]
- * 
+ *
  * Nearest-neighbour operators \f$\hat{o}^l_{i}\f$ and \f$\hat{o}^r_i\f$ should be provided in arrays \c nnl and \c nnr respectively both having length \f$n_n\f$.
- * Onsite operators \f$\hat{o}^s_{i}\f$ should be provided in array \c os having length \f$n_o\f$. 
+ * Onsite operators \f$\hat{o}^s_{i}\f$ should be provided in array \c os having length \f$n_o\f$.
  * The operators should be single-site operators or product MPOs, i.e. no internal legs, and two physical legs with the legs labelled as follows:
- * 
+ *
  * \image html single_site_op.png
  * <CENTER> \image latex single_site_op.png ""  </CENTER>
- * 
+ *
  * All the operators should have the same dimension for the physical legs.
- * 
+ *
  * The parameters \f$\alpha_{i,j}\f$ and \f$\beta_{i,j}\f$ for the nearest neighbour are onsite terms are supplied in matrices \c nnparam and \c osparam respectively.
  * The matrix must have a number of rows equal to the length \f$n_n, n_o\f$ of its respective operators array, but there are two options for the number of columns:
- * 
- * 1. All the parameters are uniform accross the lattice. 
+ *
+ * 1. All the parameters are uniform accross the lattice.
  * In this case the parameters array should have one column (which is the default behaviour if it is created with only one dimension specified).
  * The parameter \f$\alpha_{i,j}\f$ or \f$\beta_{i,j}\f$ should be in position \c i,\c 1  in the matrix for all sites.
- * 
- * 2. One or more of the parameters can vary accross the lattice. 
- * In this case the parameters matrix should have \c L-1 columns for nearest neighbour operators and \c L columns for onsite operators. 
- * The parameter \f$\alpha_{i,j}\f$ or \f$\beta_{i,j}\f$ for operator \c i and site \c j should be at position \c i,\c j in the matrix. 
+ *
+ * 2. One or more of the parameters can vary accross the lattice.
+ * In this case the parameters matrix should have \c L-1 columns for nearest neighbour operators and \c L columns for onsite operators.
+ * The parameter \f$\alpha_{i,j}\f$ or \f$\beta_{i,j}\f$ for operator \c i and site \c j should be at position \c i,\c j in the matrix.
  * Any uniform operators should have identical entries for all the sites.
- * 
- * A non-product site-wide MPO is then created which represents the sum of these operators, where now each operator in the network will have non-singleton dimension internal legs. 
- * The physical legs will have the same dimension as the original single-site operators, the internal legs will have a dimension equal to the number of nearest neighbour terms + 2. 
+ *
+ * A non-product site-wide MPO is then created which represents the sum of these operators, where now each operator in the network will have non-singleton dimension internal legs.
+ * The physical legs will have the same dimension as the original single-site operators, the internal legs will have a dimension equal to the number of nearest neighbour terms + 2.
  * The legs are labelled as follows:
- * 
+ *
  * \image html mpo_op_sing.png
  * <CENTER> \image latex mpo_op_sing.png ""  </CENTER>
- * 
+ *
  * They are connected to form the complete network:
- * 
+ *
  * \image html mpo_op_nw.png
  * <CENTER> \image latex mpo_op_nw.png ""  </CENTER>
- * 
+ *
  * \return The network representing the matrix product operator.
  */
 tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
@@ -82,12 +82,20 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
     if ((nnl != NULL) && (NULL == nnparam || nnl->sz != nnparam->numrows))
         tntErrorPrint("Cannot create a matrix product operator|The number of rows for the nearest neighbour parameters is not equal to the number of nearest neighbour terms"); /* NO_COVERAGE */
 
+    if ((NULL == nnnl && NULL != nnnr) || (NULL != nnnl && NULL == nnnr) || ((NULL != nnnl && NULL != nnnr) && nnnl->sz != nnnr->sz))
+        tntErrorPrint("Cannot create a matrix product operator|The number of left next nearest terms is not equal to the number of right nearest neighbour terms");  /* NO_COVERAGE */
+
+    /* Check that there is a parameter for each of the left and right operators, or for each of the operators and each of the sites */
+    if ((nnnl != NULL) && (NULL == nnnparam || nnnl->sz != nnnparam->numrows))
+        tntErrorPrint("Cannot create a matrix product operator|The number of rows for the next nearest neighbour parameters is not equal to the number of nearest neighbour terms"); /* NO_COVERAGE */
+
     /* Check that there is a parameter for each of the onsite operators */
     if ((os != NULL) && (NULL == osparam || os->sz != osparam->numrows))
         tntErrorPrint("Cannot create a matrix product operator|The number of rows for on-site parameters is not equal to the number of on-site terms"); /* NO_COVERAGE */
 
     /* Check that there is a non-zero number of operators */
-    if ((NULL == nnl || 0 == nnl->sz) && (NULL == os || 0 == os->sz)) tntErrorPrint("Cannot create a matrix product operator, as there are no terms");  /* NO_COVERAGE */
+    if ((NULL == nnl || 0 == nnl->sz) && (NULL == nnnl || 0 == nnnl->sz) && (NULL == os || 0 == os->sz)) tntErrorPrint("Cannot create a matrix product operator, as there are no terms");  /* NO_COVERAGE */
+
 
     /* Check that the length of the system is more than 1 */
     if (L < 2) tntErrorPrint("Function to create MPO is only valid for a system length of two or more"); /* NO_COVERAGE */
@@ -105,78 +113,52 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
 
     /* The internal dimension of the MPO will be the number of nn terms + 2. */
     Dmpo = (NULL==nnl)? nnnl->sz + 2: nnnl->sz + nnl->sz + 2;//(NULL == nnl) ? 2 : nnl->sz + 2;
-    
+
+    printf("DMPO=%d\n",Dmpo);
+    printf("tntSymmNumGet()=%d\n",tntSymmNumGet());
     /* Parity operator created */
     parityvals = tntComplexArrayAlloc(4*4);
     parityvals.vals[0].re = parityvals.vals[4*4 - 1].re = 1.0;
     parityvals.vals[5].re = parityvals.vals[10].re = -1.0;
     parity = tntNodeCreate(&parityvals, "UD", 4, 4); /* Node represeting the parity  */
- 
-    
-    
+
+
     /* ----------------- SETTING QN INFO HERE ---------------- */
     /* If symmetries are being used, allocate memory for the lists of quantum numbers for the internal legs, and assign the values using the supplied operators */
-    printf("First QN\n");
-    
+
+
     if (tntSymmTypeGet() && (0 == ignoreQN)) {
+
         /* Turn off warning since we know we are going to strip QN */
         tntSysQNClearWarnOff();
-        
+
         /* Get the quantum numbers for the physical leg */
         qnums_phys = tntNodeGetQN(tntSysBasisOpGet(), "D");
-        
+
         /* Allocate array of the correct size for the internal leg quantum numbers - all the values will be initialised to zero */
         qnums_int = tntIntArrayAlloc(Dmpo*tntSymmNumGet());
-        
+
         /* Loop through the nearest neighbour and next nearest neighbours operators, finding the correct internal quantum number for each one */
         if( (nnl != NULL) || (nnnl != NULL) ){
-            for (i = 0; i < (nnl->sz + nnnl->sz); i++) {
+            for (i = 0; i < ( (nnl->sz) + (nnnl->sz) ); i++) {
                 /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
-                
-                if( i< nnl->sz){
-                    qnums_op = tntMpsOpGetQN(nnl->vals[i]);
+
+                if( i % 2 == 0 ){ /* i%2==0 i < nnl->sz */
+                    qnums_op = tntMpsOpGetQN(nnl->vals[i/2]);
                 }
                 else{
-                    qnums_op = tntMpsOpGetQN(nnnl->vals[i]);
+                    qnums_op = tntMpsOpGetQN(nnnl->vals[(i-1)/2]);
                     }
-                
+
                 /* copy it to the relevant entry for the internal leg */
                 for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[(i+1)*tntSymmNumGet() + j] = qnums_op.vals[j];
-                           
+
                 /* free the array containing the quantum number label */
                 tntIntArrayFree(&qnums_op);
             }
         }
-      
-//        if (nnl != NULL) {
-//            for (i = 0; i < nnl->sz; i++) {
-//                /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
-//                qnums_op = tntMpsOpGetQN(nnl->vals[i]);
-//                
-//                /* copy it to the relevant entry for the internal leg */
-//                for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[(i+1)*tntSymmNumGet() + j] = qnums_op.vals[j];
-//                
-//                /* free the array containing the quantum number label */
-//                tntIntArrayFree(&qnums_op);
-//            }
-//        }
-//        /* Loop through the next nearest neighbour operators, finding the correct internal quantum number for each one */
-//        
-//        if (nnnl != NULL) {
-//            for (i = 0; i < nnnl->sz; i++) {
-//                /* Get quantum number for left operator since the function calculates QN for outgoing leg, and the left operator will be associated with the outgoing leg */
-//                qnums_op = tntMpsOpGetQN(nnnl->vals[i]);
-//                
-//                /* copy it to the relevant entry for the internal leg */
-//                for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[(i+1)*tntSymmNumGet() + j] = qnums_op.vals[j];
-//                
-//                /* free the array containing the quantum number label */
-//                tntIntArrayFree(&qnums_op);
-//            }
-//        }
-//        
-        
-        
+
+
         /* Find the quantum number for the first index in the internal leg */
         /* If there is an onsite term it will be equal to the quantum number for this */
         /* Otherwise the resultant qn of the nearest neighbour operators needs to be found */
@@ -184,56 +166,46 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
             qnums_op = tntMpsOpGetQN(os->vals[0]);
             /* Copy the quantum numbers to the first position in the array */
             for (j = 0; j < tntSymmNumGet(); j++)  qnums_int.vals[j] = qnums_op.vals[j];
-            
+
             tntIntArrayFree(&qnums_op);
         } else {
             tntIntArray qnums_op_second;
-            
+
             qnums_op = tntMpsOpGetQN(nnl->vals[0]);
             qnums_op_second = tntMpsOpGetQN(nnr->vals[0]);
-            
+
             /* TODO: Need to make this more general when other symmetry types are added */
             /* Add the quantum numbers together */
             for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[j] = qnums_op.vals[j] + qnums_op_second.vals[j];
-            
-//            qnums_op = tntMpsOpGetQN(nnnl->vals[0]);
-//            qnums_op_second = tntMpsOpGetQN(nnnr->vals[0]);
-//            
-//            /* TODO: Need to make this more general when other symmetry types are added */
-//            /* Add the quantum numbers together */
-//            for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[j] = qnums_op.vals[j] + qnums_op_second.vals[j];
-//            
+
+
             tntIntArrayFree(&qnums_op);
             tntIntArrayFree(&qnums_op_second);
         }
-        
-        
+
+
     }
     /* ----------------- END OF SETTING QN INFO ----------------- */
-    
-    
-    
-    
+
 
     /* Create the generator for the MPO that doesn't depend on operators i.e. identity in first and last element */
     mpogenvals = tntComplexArrayAlloc(Dmpo*Dmpo);
     mpogenvals.vals[0].re = mpogenvals.vals[Dmpo*Dmpo - 1].re = 1.0;
-    
+
     /* Create extra terms in the matrix if nnn terms appear other than the hopping terms*/
     if(nnl->sz>4){
         for(i=4;i<=Dmpo/2-2;i++){
-            
             mpogenvals.vals[2*(i+1)+Dmpo*(2*i+1)].re=1.0; //Starting from 4 since the first non parity term is in position (10,9)
         }
     }
-    
+
     /* Create node from mpogenvals */
     mpogen = tntNodeCreate(&mpogenvals, "LR", Dmpo, Dmpo);
-    
+
     /* Contract the gen with the identity operator to form the base mpo term */
     /* Note that the contraction step will free both mpogen and eye */
     mpobase = tntNodeContract(mpogen, eye);
-    
+
     /* Reset the numbers for the generator values */
     mpogenvals.vals[0].re = mpogenvals.vals[Dmpo*Dmpo - 1].re = 0.0;
     if(nnl->sz>4){
@@ -241,22 +213,22 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
             mpogenvals.vals[2*(i+1)+Dmpo*(2*i+1)].re = 0.0; //Starting from 4 since the first non parity term is in position (10,9)
         }
     }
-    
+
     /* Adding the parity operators within the matrix for the nnn */
     for(i=0;i<4;i++){
         mpogenvals.vals[2*(i+1)+Dmpo*(2*i+1)].re = 1.0;
     }
-    
+
     mpogen = tntNodeCreate(&mpogenvals, "LR", Dmpo, Dmpo);/* Parity matrix positions in MPO  */
     mpoparity = tntNodeContract(mpogen, parity);
-    
+
     tntNodeAdd(mpobase, mpoparity);  /* Identities and Parities added to the total matrix */
-   
+
     /* reset the numbers for the generator values */
     for(i=0;i<4;i++){
         mpogenvals.vals[2*(i+1)+Dmpo*(2*i+1)].re = 0.0;
     }
-    
+
     /* Create 1 copy of the MPO base in the network if the operators are uniform, and L copies of the MPO base in the network
        if any one of the operators vary through the system */
     /* Insert first node in the network */
@@ -293,7 +265,7 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
                 /* Set the parameters depending on whether the on-site parameters also vary */
                 if (1 == osparam->numcols) prm = osparam->vals[i];
                 else prm = osparam->vals[i + j * os->sz];
-                           
+
                 /* Determine the correct parameter and scale */
                 tntNodeScaleComplex(opssterm, prm);
 
@@ -324,14 +296,14 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
         tntNodeFree(&mpogen);
     }
 
-   
+
     /* Now create the nearest neighbour terms */
     if (nnl != NULL && 0 != nnl->sz) {
-        
+
         /* Create each term, using the MPO generator to insert each nn term to a different position in the MPO tensor. */
-        
+
         for (i = 0; i < nnl->sz; i++) {
-            
+
 
             /* Make the MPO generator: position of left operator will be bottom row, and (i + 1)st column (if col numbering starts from zero) */
             mpogenvals.vals[Dmpo-1 + (2*i+1)*Dmpo].re = 1.0;
@@ -369,26 +341,21 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
 
                 /* Contract the MPO generator and the single site operator */
                 mpoc = tntNodeContract(mpoc, opnn);
-                
-                
+
+
                 /* Add the MPO term to the total MPO */
                 tntNodeAdd(mpobase, mpoc);
-               
+
 
                 /* free this generating node as it is no longer required */
                 tntNodeFree(&mpoc);
 
                 /* Find the next MPO in the network */
                 mpobase = tntNodeFindConn(mpobase,"R");
-                
-                //printf("Test for i = %d and j = %d\n",i,j);
-
             }
 
             /* free this generating node as it is no longer required */
             tntNodeFree(&mpogen);
-            
-            //printf("Test for i = %d\n",i);
 
             /* Make the MPO generator: position of right operator will be first column, and (i + 1)st row (if row numbering starts from zero) */
             mpogenvals.vals[2*i+1].re = 1.0;
@@ -429,32 +396,32 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
         }
     }
 //    tntNodeFree(&mpobase);//Verificar para descomentar despues
-    
+
     /* Now create the next nearest neighbour terms */
 
     if (nnnl != NULL && 0 != nnnl->sz) {
         /* Create each term, using the MPO generator to insert each nnn term to a different position in the MPO tensor. */
         for (i = 0; i < nnnl->sz; i++) {
-            
+
             /* Make the MPO generator: position of left operator will be bottom row, and 2*(i + 1)st column (if col numbering starts from zero) */
             mpogenvals.vals[Dmpo-1 + 2*(i+1)*Dmpo].re = 1.0;
             mpogen = tntNodeCreate(&mpogenvals, "LR", Dmpo, Dmpo);
-            
+
             /* Reset the array for the MPO generator */
             mpogenvals.vals[Dmpo-1 + 2*(i+1)*Dmpo].re = 0.0;
-            
+
             /* Find the first MPO in the network */
             mpobase = tntNodeFindFirst(mponw);
-            
+
             /* Now loop through sites for the left operator of the pair.
              Note there are L MPOs, but only L-1 parameters for the case of
              varying parameters. Put the parameter on the L node, which although built for the last site, will be
              destroyed by the boundary node. Therefore for the last node do not scale */
-            
+
             for (j = 0; j < numnodes; j++) {
                 /* Copy the left operator and scale by parameter */
                 opnn = tntNodeCopy(nnnl->vals[i]);
-                
+
                 /* Determine the correct parameter */
                 if (j == L-1) {
                     prm.re = 1.0;
@@ -464,26 +431,26 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
                     if (1 == nnnparam->numcols) prm = nnnparam->vals[i];
                     else prm = nnnparam->vals[i + j*nnnl->sz];
                 }
-                
+
                 tntNodeScaleComplex(opnn, prm);
-                
+
                 /* Make a copy of the MPO generator */
                 mpoc = tntNodeCopy(mpogen);
-                
+
                 /* Contract the MPO generator and the single site operator */
                 mpoc = tntNodeContract(mpoc, opnn);
-                
+
                 /* Add the MPO term to the total MPO */
                 tntNodeAdd(mpobase, mpoc);
-                
+
                 /* free this generating node as it is no longer required */
                 tntNodeFree(&mpoc);
-                
+
                 /* Find the next MPO in the network */
                 mpobase = tntNodeFindConn(mpobase,"R");
-                
+
             }
-            
+
             /* free this generating node as it is no longer required */
             tntNodeFree(&mpogen);
 
@@ -491,37 +458,32 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
             tntNodeFree(&mpogen);
         }
     }
-    
-    //---------------------------- WORKING WELL UP TO HERE!!!!!! ----------------------------
-    
-    
-    
+
     /* ----------------- SETTING QN INFO HERE ---------------- */
-    printf("Second QN\n");
+
     /* Now put all the operators in the network in blocks form */
     if (tntSymmTypeGet() && (0 == ignoreQN)) {
-        
+
         mpoc = tntNodeFindFirst(mponw);
-        
+
         /* Set the quantum numbers for the first MPO. */
         tntNodeSetQN(mpoc,"D",&qnums_phys,TNT_QN_IN);
         tntNodeSetQN(mpoc,"U",&qnums_phys,TNT_QN_OUT);
         tntNodeSetQN(mpoc,"L",&qnums_int,TNT_QN_IN);
         tntNodeSetQN(mpoc,"R",&qnums_int,TNT_QN_OUT);
-        
+
         while (mpoc != tntNodeFindLast(mponw)) {
-            
+
             /* Move on the the next node */
             mpoc = tntNodeFindConn(mpoc,"R");
-            
+
             /* Set the quantum numbers for the MPO. */
             tntNodeSetQN(mpoc,"D",&qnums_phys,TNT_QN_IN);
             tntNodeSetQN(mpoc,"U",&qnums_phys,TNT_QN_OUT);
             tntNodeSetQN(mpoc,"L",&qnums_int,TNT_QN_IN);
             tntNodeSetQN(mpoc,"R",&qnums_int,TNT_QN_OUT);
         }
-        
-        
+
         /* free the quantum numbers */
         tntIntArrayFree(&qnums_phys);
     }
@@ -549,26 +511,26 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
     Rv = tntNodeCreate(&mpogenvals,"LR", Dmpo);
 
     /* ----------------- SETTING QN INFO HERE ---------------- */
-    printf("Third QN\n");
+
     /* Now put the boundary vectors in blocks form */
     if (tntSymmTypeGet() && (0 == ignoreQN)) {
 
         mpoc = tntNodeFindFirst(mponw);
-        
+
         /* Set the quantum numbers for the right boundary vector. */
         tntNodeSetQN(Rv,"L",&qnums_int,TNT_QN_IN);
         tntNodeSetQN(Rv,"R",&qnums_int,TNT_QN_OUT);
-        
+
         /* Set the outgoing quantum numbers for the left boundary vector. */
         tntNodeSetQN(Lv,"R",&qnums_int,TNT_QN_OUT);
-        
+
         /* Incoming boundary vectors are always zero */
         for (j = 0; j < tntSymmNumGet(); j++) qnums_int.vals[j] = 0;
         tntNodeSetQN(Lv,"L",&qnums_int,TNT_QN_IN);
-        
+
         /* Now quantum numbers for internal legs are finished with - free the array */
         tntIntArrayFree(&qnums_int);
-        
+
         /* Turn the warning back on */
         tntSysQNClearWarnOn();
     }
@@ -587,8 +549,7 @@ tntNetwork tntMpsCreateMpoLadder(unsigned L, /*!< Length of system. */
 
     /* Free the arrays and nodes that are no longer required */
     tntComplexArrayFree(&mpogenvals);
-   
-//
+
 //    tntNodePrintAsMatrix(tntNodeFindFirst(mponw),"UL","DR");
 //    //tntNodePrintAsMatrix(tntNodeFindConn(tntNodeFindFirst(mponw),"R"),"UL","DR");
 //    tntNodePrintAsMatrix(tntNodeFindLast(mponw),"UL","DR");
