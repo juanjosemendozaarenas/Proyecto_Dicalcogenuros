@@ -1,0 +1,54 @@
+#****************************************************************************************************
+#************************************** SCRIPT FORTRAN **********************************************
+#                                                                                                   *
+# Autors : Fernando Gómez*, Juan José Mendoza**, Ferney Rodríguez* and Luis Quitroga*               *
+# Affiliations : *Universidad de los Andes **Oxford University                                      *
+# Date : Agost 2017                                                                                 *
+#                                                                                                   *
+#****************************************************************************************************
+#****************************************************************************************************
+#
+# Este script permite someter un trabajo en clustergate de un programa previamente compilado con    *
+# gfortran Ejemp: gfortran Myprog.f -o make.o                                                       *
+#                   
+#===================================================================================================*
+
+#!/bin/bash
+
+#PBS -N Nombre_Job
+#PBS -q batch
+
+#================ Recursos a utilizar ============================
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=1gb
+#PBS -l vmem=1gb
+#PBS -l walltime=360:00:00
+
+#=================== Mensajes de Alerta ===========================
+#PBS -M fj.gomez34@uniandes.edu.co
+#PBS -m abe
+
+#============ Variables directorios de ejecucion y salida ========== 
+TMP_DIR=/state/partition1/$USER/$PBS_JOBNAME.$PBS_JOBID
+OUT_DIR=$PBS_O_WORKDIR/output/$PBS_JOBNAME.$PBS_JOBID
+
+#============= Crea los directorios de ejecucion y salida =========== 
+mkdir -p $TMP_DIR
+mkdir -p $OUT_DIR
+
+#========= Copiado y ejecucion del programa ========================== 
+#== Se ubica en directorio de trabajo
+cd $PBS_O_WORKDIR
+
+#== Copia el ejecutable make.o en el directorio temporal
+cp make.o $TMP_DIR/.
+cd $TMP_DIR
+
+#== Ejecuta el programa
+chmod +x make.o
+./make.o
+
+#=========== Finalmente translado de informacion del nodo/home =======
+mv -f $TMP_DIR/* $OUT_DIR/.
+rm -rf $TMP_DIR
+

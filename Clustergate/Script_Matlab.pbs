@@ -1,0 +1,71 @@
+#****************************************************************************************************
+#************************************** SCRIPT MATLAB ***********************************************
+#                                                                                                   *
+# Autors : Fernando Gómez*, Juan José Mendoza**, Ferney Rodríguez* and Luis Quitroga*               *
+# Affiliations : *Universidad de los Andes **Oxford University                                      *
+# Date : Agost 2017                                                                                 *
+#                                                                                                   *
+#****************************************************************************************************
+#****************************************************************************************************
+#
+# Este script permite someter un trabajo en clustergate de un programa realizado en Matlab MyProg.m * 
+#
+#===================================================================================================*
+
+#!/bin/bash
+
+#PBS -N Nombre_Job
+#PBS -q batch
+
+#================ Recursos a utilizar ============================
+#PBS -l nodes=1:ppn=1
+
+# Matlab is capable of using at most nodes=1:ppn=12
+# Matlab will not use more than 1 node
+
+#PBS -l mem=1gb
+#PBS -l vmem=1gb
+#PBS -l walltime=360:00:00
+
+#=================== Mensajes de Alerta ===========================
+#PBS -M fj.gomez34@uniandes.edu.co
+#PBS -m abe
+
+#=================== Carga el Modulo de Matlab 2014b =============
+module load matlab/R2014b
+
+# Define the root location of MATLAB:
+MATLABROOT=/lustre/apps/MATLAB/R2014b
+
+#============ Variables directorios de ejecucion y salida ==========
+TMP_DIR=/state/partition1/$USER/$PBS_JOBNAME.$PBS_JOBID
+OUT_DIR=$PBS_O_WORKDIR/output/$PBS_JOBNAME.$PBS_JOBID
+
+#============= Crea los directorios de ejecucion y salida ===========
+mkdir -p $TMP_DIR
+mkdir -p $OUT_DIR
+
+#========= Copiado y ejecucion del programa ==========================
+#== Se ubica en directorio de trabajo
+cd $PBS_O_WORKDIR
+
+#== Copia el ejecutable make.o en el directorio temporal
+cp -r funcion1.m $TMPDIR/.
+cp -r funcion2.m $TMPDIR/.
+cp -r MyProg.m $TMPDIR/.
+
+#== Ejecuta el programa
+cd $TMPDIR
+
+matlab -nodesktop -r MyProg
+
+: The -nodesktop line tells matlab not to try to use any graphics or JVM.
+: The -r specifies that the next argument Name  is the file to run.
+
+#=========== Finalmente translado de informacion del nodo/home =======
+mv -f $TMP_DIR/* $OUT_DIR/.
+rm -rf $TMP_DIR
+
+
+
+

@@ -1,0 +1,72 @@
+#****************************************************************************************************
+#***************************** SCRIPT DMRG - Ground state Energy  ***********************************
+# Script to use TNT libraries for calculate Ground state for XXZ model Hamiltonian.                 *
+#                                                                                                   *
+# Autors : Fernando Gómez (1,2), and Adolfo del Campo (2)                                           *
+# Affiliations : (1) Universidad de los Andes                                                       *
+#                (2) University of Massachusetts Boston                                             * 
+# Date : Febrary 2018                                                                               *
+#                                                                                                   *
+#****************************************************************************************************
+#****************************************************************************************************
+
+#!/bin/bash
+
+#PBS -q batch
+#PBS -N DMRG_IKZM_4
+##PBS -l nodes=node-8.local:ppn=1
+
+#PBS -l nodes=1:ppn=1:intel 
+#PBS -l walltime=80:00:00
+#PBS -l mem=32gb
+#PBS -l vmem=32gb
+##PBS -M fj.gomez34@uniandes.edu.co
+#PBS -m abe
+
+#--------------------- Define number of initial state ---------------------
+declare -i Simul=1
+#--------------------------------------------------------------------------
+
+module load matlab/R2014b
+
+# Define the root location of MATLAB:
+MATLABROOT=/lustre/apps/MATLAB/R2014b
+
+DIR_INT := /hpcfs/home/ciencias/fisica/postgrado/fj.gomez34/.pkgs/intel/parallel_studio_xe_2017.7.065/compilers_and_libraries_2017/linux
+
+# Define the dynamic library paths:
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MATLABROOT}/bin/glnxa64:${DIR_INT}/compiler/lib/intel64
+
+export OMP_DYNAMIC=TRUE
+export OMP_NESTED=TRUE
+export MKL_DYNAMIC=TRUE
+export MKL_NUM_THREADS=8
+export OMP_NUM_THREADS=8
+
+# Run the program with provided command line arguments
+
+cd $PBS_O_WORKDIR
+
+TMPDIR=/state/partition1/$USER/$PBS_JOBNAME.${PBS_JOBID%%.clustermaster.uniandes.edu.co*}
+
+OUTDIR=$PBS_O_WORKDIR/output
+
+# Run the program with provided command line arguments
+
+mkdir -p $TMPDIR
+mkdir -p $OUTDIR
+
+
+# Copy all files funcition to run
+cp -rf ../bin/* $TMPDIR/.
+
+cp -rf ../initfiles/initial_GS_IKZM${Simul}* $TMPDIR/.
+
+cd $TMPDIR
+
+./Ground_State -d ${OUTDIR}/ -o initial_GS_IKZM${Simul}.mat
+
+cd $OUTDIR
+
+mv -f $TMPDIR/*.mat ./ 
+rm -rf $TMPDIR
