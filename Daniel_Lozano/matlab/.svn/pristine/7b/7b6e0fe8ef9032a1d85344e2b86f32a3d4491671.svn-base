@@ -1,0 +1,11 @@
+function ex_op = tntMatExpandBasis(ssop, N)
+
+d = size(ssop,1);
+
+ex_op = cell(N,1);
+
+for n = 1:N
+    ex_op{n} = kron(kron(eye(d^(n-1)),ssop),eye(d^(N-n)));
+end
+
+end

@@ -1,0 +1,14 @@
+function [bdag,b,n] = tntMatBosonOps(nmax,N)
+%% tntMatBosonOps Creates N-species boson operators up to a maximum number per site of nmax
+
+% Build sparse matrix version of basic spin operators :
+bdags = diag(sqrt(1:nmax),-1);
+bs = diag(sqrt(1:nmax),1);
+ns = diag((0:nmax)',0);
+
+% Construct spin operators for each spin in the full Hilbert space :
+b = tntMatExpandBasis(bs,N);
+bdag = tntMatExpandBasis(bdags,N);
+n = tntMatExpandBasis(ns,N);
+
+

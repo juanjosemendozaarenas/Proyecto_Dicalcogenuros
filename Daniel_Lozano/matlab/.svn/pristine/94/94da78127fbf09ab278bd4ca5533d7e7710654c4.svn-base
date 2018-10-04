@@ -1,0 +1,14 @@
+function narr = tntMatCreateOpArray(ops)
+
+for loop = 1:length(ops)
+    tensor.elems_type = 'values';
+    tensor.elems = ops{loop};
+    tensor.dims = size(ops{loop});
+    tensor.qn_info.qn_dir = [0,0];
+    tensor.qn_info.qn_index = {[],[]};
+    narr(loop).tensor = tensor;
+    narr(loop).ids = 'DU';
+    narr(loop).indices = {0,1};
+end
+
+end
