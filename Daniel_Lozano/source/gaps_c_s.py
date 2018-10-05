@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-a=[1.5,2.0,2.5]
-Ds=[0.1591,0.5353,1.273]
-Dc=[1.5061,1.5498,2.0919]
+a=[1.5,2.0,2.5,3.]
+Ds=[0.1591,0.5353,1.273,2.125]
+Dc=[1.5061,1.5498,2.0919,2.861]
 
 plt.plot(a,Ds,"o-",label=" $ \Delta_s  $")
 plt.plot(a,Dc,"^-",label="$ \Delta_c  $")
