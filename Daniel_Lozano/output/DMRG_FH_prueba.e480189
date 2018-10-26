@@ -1,0 +1,2 @@
+/var/spool/torque/mom_priv/jobs/480189.clustermaster.uniandes.edu.co.SC: line 36: DIR_INT: command not found
+=>> PBS: job killed: walltime 288006 exceeded limit 288000
