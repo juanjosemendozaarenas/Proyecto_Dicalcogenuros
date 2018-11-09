@@ -24,7 +24,7 @@ end
 J2_coupling = -J*diag(eye(L-2))'; % Array of J for nnn
 V2_coupling = V*diag(eye(L-2))'; % Array of V for nnn
 
-qn_tot = [0.5*L-1 0.5*L-1]; % Define quantum numbers for each species
+qn_tot = [0.5*L 0.5*L]; % Define quantum numbers for each species
 add_to_file = 0; % Number to add to name of files
 
 chi_ini_rand = 1; % Truncation parameter for the initial random state without symmetries. Has to be very small so random MPS can be created in C code (this is a bug of the TNT library)
