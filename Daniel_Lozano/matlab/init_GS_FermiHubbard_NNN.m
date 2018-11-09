@@ -4,9 +4,9 @@ clear; clc;
 path(path,'./tnt_matfiles/'); % Add path for common functions
 
 %% Define system parameters
-L = 64; % System size including both legs
+L = 10; % System size including both legs
 J = 1; % Hopping
-U_array = [4]; % List of values of on-site interaction
+U_array = [8]; % List of values of on-site interaction
 V = 0; % Nearest-neighbor interaction
 a=3; %Parameter mediating the legs of the ladder
 
@@ -29,10 +29,10 @@ add_to_file = 0; % Number to add to name of files
 
 chi_ini_rand = 1; % Truncation parameter for the initial random state without symmetries. Has to be very small so random MPS can be created in C code (this is a bug of the TNT library)
 chi = 200; % Initial value of chi
-chi_max = 400; % Maximal and chi value of the truncation parameter
+chi_max = 1000; % Maximal and chi value of the truncation parameter
 delta_chi = 100; % Increase of chi each time maximal error is achieved. Set to zero to keep chi constant.
 
-intermediate = 0; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
+intermediate = 1; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
 use_symm = 1; % Decide if symmetries will be used. 1 if yes, 0 if no
 
 rand_wf = 1; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
