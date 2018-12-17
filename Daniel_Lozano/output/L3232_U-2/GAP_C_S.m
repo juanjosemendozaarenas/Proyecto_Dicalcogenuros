@@ -9,8 +9,8 @@ L = 64; % Number of system sites.
 J=1;
 U=-2;
 V=[0,0.5,1,1.5,2,2.5,3,3.5,4];
-DS=zeros(size(V));
-DC=zeros(size(V));
+DS=ones(size(V))*-1;
+DC=ones(size(V))*-1;
 a=0.1;
 chi1=1000;
 chi2=2000;
@@ -18,10 +18,11 @@ chi2=2000;
 Number1=[31,32,33,33,31];
 Number2=[31,32,33,31,33];
 
+% Search for the V files which have 4 output files
 for j=1:9
 file=['V' num2str(V(j))];
 disp(file);
-path(path,file); % Add path for common functions
+path(path,file); % Add path for the V file
 
 Energy=zeros(5,1);
 counter=0;
@@ -56,11 +57,11 @@ end
         DC(j)= 0.5 * ( Energy(1)+ Energy(3) -2*Energy(2) );
         
 % In case one doesn't work    
-        if E(4)==0
+    if Energy(4)==0
              DS(j)=Energy(5)-Energy(2);
-        else
+    else
              DS(j)=Energy(4)-Energy(2);
-        end
+    end
 
     
     end

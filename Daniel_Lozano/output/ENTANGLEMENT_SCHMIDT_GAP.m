@@ -1,6 +1,6 @@
 % Function to read results of the superfermion TNT calculation
 
-function GAP_C_S
+function ENTANGLEMENT_SCHMIDT_GAP
 
 clear; clc;
 
@@ -10,10 +10,9 @@ J=1;
 U=-2;
 V=[0,0.5,1,1.5,2,2.5,3,3.5,4];
 a=0.1;
-chi=400;
 
-Entr=zeros(size(V));%9,1);
-Schmidt_Gap=zeros(size(V));%9,1);
+Entr=ones(size(V))*-1;%9,1);
+Schmidt_Gap=ones(size(V))*-1;%9,1);
 disp(size(Schmidt_Gap))
 % extra= ['./U' num2str(U) '_L' num2str(L) '/'];
 % disp(extra)
@@ -40,4 +39,5 @@ P1=plot(V,Entr,"-o");
 L1="Entropy";
 P2=plot(V,Schmidt_Gap,"-o");
 L2="Schmidt gap";
+grid on
 legend([P1,P2],[L1,L2]);
