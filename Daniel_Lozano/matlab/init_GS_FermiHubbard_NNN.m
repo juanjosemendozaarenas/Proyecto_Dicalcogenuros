@@ -4,11 +4,11 @@ clear; clc;
 path(path,'./tnt_matfiles/'); % Add path for common functions
 
 %% Define system parameters
-L = 10; % System size including both legs
+L = 64; % System size including both legs
 J = 1; % Hopping
-U_array = [8]; % List of values of on-site interaction
-V = 0; % Nearest-neighbor interaction
-a=3; %Parameter mediating the legs of the ladder
+U_array = [-2]; % List of values of on-site interaction
+V = 1;%.5; % Nearest-neighbor interaction
+a=0.1; %Parameter mediating the legs of the ladder
 
 
 J1_coupling = zeros(L-1,1)'; % Array of J for nn
@@ -24,18 +24,18 @@ end
 J2_coupling = -J*diag(eye(L-2))'; % Array of J for nnn
 V2_coupling = V*diag(eye(L-2))'; % Array of V for nnn
 
-qn_tot = [0.5*L 0.5*L]; % Define quantum numbers for each species
+qn_tot = [0.5*L+1 0.5*L-1]; % Define quantum numbers for each species
 add_to_file = 0; % Number to add to name of files
 
 chi_ini_rand = 1; % Truncation parameter for the initial random state without symmetries. Has to be very small so random MPS can be created in C code (this is a bug of the TNT library)
-chi = 200; % Initial value of chi
-chi_max = 1000; % Maximal and chi value of the truncation parameter
-delta_chi = 100; % Increase of chi each time maximal error is achieved. Set to zero to keep chi constant.
+chi = 1100; % Initial value of chi
+chi_max = 1500; % Maximal and chi value of the truncation parameter
+delta_chi = 300; % Increase of chi each time maximal error is achieved. Set to zero to keep chi constant.
 
 intermediate = 1; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
 use_symm = 1; % Decide if symmetries will be used. 1 if yes, 0 if no
 
-rand_wf = 1; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
+rand_wf = 0; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
 prec = 1e-6; % Precision in calculation of energy
 i_max = 60; % Maximal number of DMRG iterations
 err_max = 1e-7; % Maximal error before increasing chi in each DMRG step
@@ -231,10 +231,10 @@ for count_file = 1:size(U_array,2)
     %% Save information
     
     % Name of file where ground state will be saved
-    savefile = ['GS_FH_NNN_L'  num2str(L) '_[' num2str(qn_tot(1))  ',' num2str(qn_tot(2)) ']' '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_chi' num2str(chi_max)   '.mat'];
+    savefile = ['GS_FH_NNN_L'  num2str(L) '_[' num2str(qn_tot(1))  '_' num2str(qn_tot(2)) ']' '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_chi' num2str(1000)   '.mat'];
     
     % Saving current information
-    fname = ['../initfiles/initial_GS_FH' '_NNN' '_L' num2str(L) '_a' num2str(a) '_[' num2str(qn_tot(1))  '_' num2str(qn_tot(2)) ']'  '.mat']; %num2str(count_file+add_to_file)
+    fname = ['../initfiles/initial_GS_FH' '_NNN' '_L' num2str(L) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_[' num2str(qn_tot(1))  '_' num2str(qn_tot(2)) ']'  '.mat']; %num2str(count_file+add_to_file)
     save(fname);
     
 end

@@ -7,19 +7,19 @@ path(path,'./tnt_matfiles/'); % Add path for common functions
 L = 64; % System size including both legs
 J = 1; % Hopping
 U_array = -2; % List of values of on-site interaction
-V_array= [0,0.5,1,1.5,2,2.5,3,3.5,4]; % Nearest-neighbor interaction
+V_array= [0,0.5,1,2.5,3.5]; % Nearest-neighbor interaction 0,0.5,1,1.5,2,2.5,3,3.5,4
 a=0.1; %Parameter mediating the legs of the ladder
 
 
-qn_tot = [0.5*L-1 0.5*L-1]; % Define quantum numbers for each species
+qn_tot = [0.5*L+1 0.5*L-1]; % Define quantum numbers for each species
 add_to_file = 0; % Number to add to name of files
 
 chi_ini_rand = 1; % Truncation parameter for the initial random state without symmetries. Has to be very small so random MPS can be created in C code (this is a bug of the TNT library)
 chi = 200; % Initial value of chi
-chi_max = 1000; % Maximal and chi value of the truncation parameter
+chi_max = 2000; % Maximal and chi value of the truncation parameter
 delta_chi = 100; % Increase of chi each time maximal error is achieved. Set to zero to keep chi constant.
 
-intermediate = 1; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
+intermediate = 0; % Set to 1 if initial state of DMRG is a state from previous simulation with same parameters (e.g. if previous simulation was killed for some reason, and intermediate states were being saved)
 use_symm = 1; % Decide if symmetries will be used. 1 if yes, 0 if no
 
 rand_wf = 1; % 1 to initialise DMRG with random state created in C, 0 to load from initialisation file
@@ -232,7 +232,7 @@ for count_file = 1:size(V_array,2)
     %% Save information
     
     % Name of file where ground state will be saved
-    savefile = ['GS_FH_NNN_L'  num2str(L) '_[' num2str(qn_tot(1))  ',' num2str(qn_tot(2)) ']' '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_chi' num2str(chi_max)   '.mat'];
+    savefile = ['GS_FH_NNN_L'  num2str(L) '_[' num2str(qn_tot(1))  '_' num2str(qn_tot(2)) ']' '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_chi' num2str(chi_max)   '.mat'];
     
     % Saving current information
     fname = ['../initfiles/initial_GS_FH' '_NNN' '_L' num2str(L) '_J' num2str(J) '_U' num2str(U) '_V' num2str(V) '_a' num2str(a) '_[' num2str(qn_tot(1))  '_' num2str(qn_tot(2)) ']'  '.mat']; %num2str(count_file+add_to_file)
